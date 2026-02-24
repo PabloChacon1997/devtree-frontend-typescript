@@ -1,6 +1,11 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { isAxiosError } from 'axios';
+
+import api from "../config/axios";
+import type { RegisterForm } from "../types";
 import ErrorMessage from "../components/ErrorMessage";
+import { toast } from "sonner";
 
 export default function RegisterView() {
 
@@ -12,10 +17,20 @@ export default function RegisterView() {
     password_confirmation: '',
   }
 
-  const { register, watch, handleSubmit, formState: { errors } } = useForm({defaultValues: initialValues});
+
+  const { register, watch,reset, handleSubmit, formState: { errors } } = useForm<RegisterForm>({defaultValues: initialValues});
+  // eslint-disable-next-line react-hooks/incompatible-library
   const password = watch('password');
-  const handleRegister = () => {
-    console.log('Desde handle register')
+  const handleRegister = async (formData: RegisterForm) => {
+    try {
+      const {data} = await api.post(`/api/auth/register`, formData);
+      toast.success(data?.msg);
+      reset();
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        toast.error(error.response.data.error);
+      }
+    }
   }
   return (
     <>
