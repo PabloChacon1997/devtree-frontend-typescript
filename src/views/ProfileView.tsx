@@ -4,7 +4,8 @@ import { toast } from "sonner";
 
 import ErrorMessage from "../components/ErrorMessage";
 import type { ProfileForm, User } from "../types";
-import { updateProfile } from "../api/DevtreeApi";
+import { updateProfile, uploadImage } from "../api/DevtreeApi";
+import type { ChangeEvent } from "react";
 
 
 export default function ProfileView() {
@@ -27,9 +28,29 @@ export default function ProfileView() {
             queryClient.invalidateQueries({queryKey: ['user']});
         }
     });
+    const uploadImageMutation = useMutation({
+        mutationFn: uploadImage,
+        onError: (error) => {
+            toast.error(error.message);
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(['user'], (prevData: User) => {
+                return {
+                    ...prevData,
+                    image: data?.data.image
+                }
+            });
+        }
+    });
 
     const handleUserProfileForm = (formData: ProfileForm) => {
         updateProfileMutation.mutate(formData);
+    }
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            uploadImageMutation.mutate(e.target.files[0]);
+        }
     }
 
     return (
@@ -77,7 +98,7 @@ export default function ProfileView() {
                     name="handle"
                     className="border-none bg-slate-100 rounded-lg p-2"
                     accept="image/*"
-                    onChange={ () => {} }
+                    onChange={handleChange}
                 />
             </div>
 
