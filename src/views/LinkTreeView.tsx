@@ -33,12 +33,6 @@ export const LinkTreeView = () => {
       return item;
     })
     setDevtreeLinks(updateLinks);
-    queryClient.setQueryData(['user'], (prevState: User) => {
-      return {
-        ...prevState,
-        links: JSON.stringify(updateLinks),
-      }
-    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   
@@ -46,13 +40,8 @@ export const LinkTreeView = () => {
   const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
     const updatedLinks = devtreeLinks.map(link => link.name === e.target.name ? { ...link, url: e.target.value } :link);
     setDevtreeLinks(updatedLinks);
-    queryClient.setQueryData(['user'], (prevState: User) => {
-      return {
-        ...prevState,
-        links: JSON.stringify(updatedLinks),
-      }
-    });
   }
+  const links: SocialNetwork[] = JSON.parse(user.links);
 
   const handleEnabledLink = (socialNetwork: string) => {
     const updatedLinks = devtreeLinks.map(link => {
@@ -66,10 +55,54 @@ export const LinkTreeView = () => {
       return link;
     });
     setDevtreeLinks(updatedLinks);
+    let updatedItems: SocialNetwork[] = [];
+    const selectSocialnetwork = updatedLinks.find(link => link.name === socialNetwork);
+    if(selectSocialnetwork?.enabled) {
+      const id = links.filter(link => link.id).length +1;
+      if (links.some(link => link.name === socialNetwork)) {
+        updatedItems = links.map(link => {
+          if (link.name === socialNetwork) {
+            return {
+              ...link,
+              enabled: true,
+              id
+            }
+          } else {
+            return link
+          }
+        })
+      } else {
+        const newItem = {
+          ...selectSocialnetwork,
+          id,
+        }
+  
+        updatedItems = [...links, newItem]
+      }
+    } else {
+      const indexToUpdate = links.findIndex(link => link.name === socialNetwork);
+      updatedItems = links.map(link => {
+        if (link.name === socialNetwork) {
+          return {
+            ...link,
+            id: 0,
+            enabled: false,
+          }
+        } else if(link.id > indexToUpdate) {
+          return {
+            ...link,
+            id: link.id - 1,
+          }
+        } else {
+          return link;
+        }
+      });
+    }
+
     queryClient.setQueryData(['user'], (prevState: User) => {
       return {
         ...prevState,
-        links: JSON.stringify(updatedLinks),
+        links: JSON.stringify(updatedItems),
       }
     });
   }
