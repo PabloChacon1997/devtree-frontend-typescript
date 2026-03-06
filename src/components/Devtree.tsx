@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { DndContext, closestCenter } from '@dnd-kit/core'
 import type {DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { useQueryClient } from "@tanstack/react-query";
 
 import NavigationTabs from "./NavigationTabs";
 import type { SocialNetwork, User } from "../types";
@@ -20,6 +21,8 @@ export default function Devtree({data}: DevtreePorps) {
       setEnabledLinks(JSON.parse(data.links).filter((link: SocialNetwork) => link.enabled))
     }, [data])
 
+    const queryClient = useQueryClient()
+
     const handleDragEnd = (e: DragEndEvent) => {
 
         const {active, over} = e;
@@ -28,6 +31,16 @@ export default function Devtree({data}: DevtreePorps) {
             const newIndex = enabledLinks.findIndex(link => link.id === over.id)
             const order = arrayMove(enabledLinks, prevIndex, newIndex)
             setEnabledLinks(order)
+            const disabledLinks: SocialNetwork[] = JSON.parse(data.links).filter((link: SocialNetwork) => !link.enabled)
+            
+            const links = [...order, ...disabledLinks];
+            console.log(links)
+            queryClient.setQueryData(['user'], (prevData: User) => {
+                return {
+                    ...prevData,
+                    links: JSON.stringify(links)
+                }
+            })
         }
     }
     
@@ -56,7 +69,7 @@ export default function Devtree({data}: DevtreePorps) {
               <div className="flex justify-end">
                   <Link 
                       className="font-bold text-right text-slate-800 text-2xl"
-                      to={''}
+                      to={`/${data.handle}`}
                       target="_blank"
                       rel="noreferrer noopener"
                   >Visitar Mi Perfil: /{data.handle}</Link>
